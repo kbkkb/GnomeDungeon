@@ -61,7 +61,7 @@ try {
   console.log('[1] 资源加载');
   const resp = await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
   ok('页面返回 200', resp && resp.status() === 200, `HTTP ${resp ? resp.status() : '无响应'}`);
-  ok('标题正确', (await page.title()).includes('地牢刷数值'), await page.title());
+  ok('标题正确', (await page.title()).includes('诺姆地牢'), await page.title());
 
   // 逐个确认关键资源真的加载成功（而不是 404）
   const assets = await page.evaluate(() =>
