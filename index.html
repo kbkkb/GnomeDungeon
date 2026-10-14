@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14100e">
+<title>地牢刷数值 · 广告游戏 Demo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ======= 顶栏 HUD ======= -->
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-name">地牢刷数值</span>
+      <span class="brand-tag">广告游戏 Demo</span>
+    </div>
+
+    <div class="hud">
+      <div class="hud-item hud-power">
+        <span class="hud-label">战力</span>
+        <span class="hud-value" id="hud-power">1</span>
+        <span class="hud-boost" id="hud-boost" hidden>广告 ×2</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">层数</span>
+        <span class="hud-value" id="hud-floor">第 1 层</span>
+        <span class="hud-sub" id="hud-remain">剩余 7 只</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">击杀</span>
+        <span class="hud-value" id="hud-kills">0</span>
+        <span class="hud-sub" id="hud-best">最高 1 层</span>
+      </div>
+      <div class="hud-item hud-actions">
+        <button class="chip" id="btn-sound" title="开关音效">🔊 音效</button>
+        <button class="chip" id="btn-auto" title="自动战斗状态">🤖 自动: 关</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======= 主舞台 ======= -->
+  <main id="stage">
+    <section id="arena-wrap">
+      <canvas id="arena"></canvas>
+
+      <div id="banner" class="banner" hidden></div>
+
+      <!-- 标题页 -->
+      <div class="overlay" id="screen-title">
+        <div class="dialog">
+          <h1>⚔️ 地牢刷数值</h1>
+          <p class="lead">你掉进了无尽地牢，身边全是怪物。<br>这里没有血条，<b>战力就是一切</b>。</p>
+
+          <div class="rule-demo">
+            <div class="rule-row rule-win">
+              <span class="rule-num me">12</span>
+              <span class="rule-op">≥</span>
+              <span class="rule-num foe">5</span>
+              <span class="rule-text">一击秒杀，<b>吞噬</b>它的战力 → 变成 17</span>
+            </div>
+            <div class="rule-row rule-lose">
+              <span class="rule-num me">3</span>
+              <span class="rule-op">&lt;</span>
+              <span class="rule-num foe">9</span>
+              <span class="rule-text">被它击杀，<b>立即失败</b></span>
+            </div>
+          </div>
+
+          <ul class="rules">
+            <li>点击地面移动（也支持 WASD / 方向键），<b>走过去撞怪</b>就是攻击</li>
+            <li>先挑小的刷，战力滚起来后再回头碾压刚才打不过的</li>
+            <li>地上的 ⚔ 装备和 🎁 道具，碰到就生效</li>
+            <li>清空本层全部怪物即进入下一层；每 5 层一个 BOSS</li>
+            <li>红色数字 + 脉冲红圈 = <b>现在千万别碰</b></li>
+          </ul>
+          <button class="btn btn-primary btn-big" id="btn-start">开始游戏</button>
+          <p class="best" id="title-best"></p>
+          <p class="fine">广告与首充均为模拟演示，不会加载任何真实广告、不会扣费</p>
+        </div>
+      </div>
+
+      <!-- 死亡页 -->
+      <div class="overlay" id="screen-dead" hidden>
+        <div class="dialog">
+          <h1 class="dead-title">💀 你被怪物击杀了</h1>
+          <p class="lead" id="dead-reason">战力比不过，就是这样的。</p>
+          <div class="stat-grid" id="dead-stats"></div>
+          <div class="dialog-actions">
+            <button class="btn btn-ad" id="btn-revive">▶ 看广告复活（无敌 4 秒 + 战力×2 20 秒）</button>
+            <button class="btn btn-ghost" id="btn-restart">重新开始</button>
+          </div>
+          <p class="fine">演示广告，点击后有 5 秒假倒计时</p>
+        </div>
+      </div>
+
+      <!-- 假广告页 -->
+      <div class="overlay" id="screen-ad" hidden>
+        <div class="ad-box">
+          <div class="ad-topbar">
+            <span class="ad-badge">AD</span>
+            <span class="ad-title" id="ad-title">广告</span>
+            <button class="ad-close" id="ad-close" disabled>✕</button>
+          </div>
+          <div class="ad-creative">
+            <!-- 假的"游戏画面"：吉姆面对一面冰墙 -->
+            <div class="jim-scene">
+              <div class="jim-snow"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="jim-hero">🧙</div>
+              <div class="jim-bubble">救命！</div>
+              <div class="jim-wall">
+                <i></i><i></i><i></i>
+                <i></i><i class="brk"></i><i></i>
+                <i></i><i></i><i></i>
+              </div>
+              <div class="jim-crack"></div>
+              <div class="jim-tap">TAP!</div>
+            </div>
+
+            <!-- 假广告标配元信息 -->
+            <div class="ad-meta">
+              <div class="ad-app-icon">❄️</div>
+              <div class="ad-app-info">
+                <b>吉姆冰墙</b>
+                <span>❄ 破解冰墙，救出吉姆！</span>
+                <div class="ad-stars">★★★★★ <em>4.9</em><span class="ad-dl">1亿+ 下载</span><span class="ad-size">5MB</span></div>
+              </div>
+              <div class="ad-fake-cta">INSTALL</div>
+            </div>
+
+            <div class="ad-tags">
+              <span>无需网络</span><span>免费</span><span>99% 的人过不了第 3 关</span>
+            </div>
+          </div>
+          <div class="ad-progress"><i id="ad-progress"></i></div>
+          <p class="ad-count" id="ad-count-text">奖励 <b>5</b> 秒后发放</p>
+          <p class="fine">这是教学演示用的假广告，不会请求任何广告联盟</p>
+        </div>
+      </div>
+
+      <!-- 假首充页 -->
+      <div class="overlay" id="screen-pay" hidden>
+        <div class="dialog dialog-pay">
+          <h1>👑 首充礼包</h1>
+          <p class="lead">充值 <b class="price">¥6</b> 立即获得：</p>
+          <ul class="rules">
+            <li>战力 <b>×3</b><span class="dim">（立刻能推掉当前打不过的怪）</span></li>
+            <li>永久解锁<b>自动战斗</b><span class="dim">（自动寻找能打的怪）</span></li>
+            <li>这就是这类游戏真正的付费设计</li>
+          </ul>
+          <div class="dialog-actions">
+            <button class="btn btn-primary btn-big" id="btn-pay-confirm">确认支付 ¥6</button>
+            <button class="btn btn-ghost" id="btn-pay-cancel">再想想</button>
+          </div>
+          <p class="fine">纯演示，不会产生任何真实扣费</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======= 侧面板 ======= -->
+    <aside id="panel">
+      <section class="card">
+        <h2>⚔ 最近获得</h2>
+        <div class="equip">
+          <div class="equip-icon" id="equip-icon">👊</div>
+          <div class="equip-info">
+            <div class="equip-name" id="equip-name">赤手空拳</div>
+            <div class="equip-bonus" id="equip-bonus">走到发光武器上即可拾取</div>
+          </div>
+        </div>
+        <button class="btn btn-ad btn-full" id="btn-draw-equip">▶ 看广告抽装备（战力 +50%~100%）</button>
+      </section>
+
+      <section class="card">
+        <h2>🎁 道具图鉴</h2>
+        <ul class="prop-list" id="prop-list"></ul>
+      </section>
+
+      <section class="card">
+        <h2>📣 变现点（演示）</h2>
+        <button class="btn btn-ad btn-full" id="btn-ad-auto">▶ 看广告解锁自动战斗 60 秒</button>
+        <button class="btn btn-pay btn-full" id="btn-first-charge">👑 首充 ¥6：战力 ×3 + 永久自动</button>
+      </section>
+
+      <section class="card card-log">
+        <h2>📜 战斗日志</h2>
+        <ul id="log"></ul>
+      </section>
+
+      <section class="card card-tips">
+        <h2>💡 操作与规则</h2>
+        <ul class="tips">
+          <li>点击地面 / WASD / 方向键移动</li>
+          <li><b>撞上</b>战力不低于你的怪 → 秒杀并吞噬</li>
+          <li>撞上战力比你高的怪 → <b>立即死亡</b></li>
+          <li>红色数字 = 打不过，绕着走</li>
+          <li>陷坑会削 25% 战力，靠近才会显形</li>
+        </ul>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<script src="balance.js"></script>
+<script src="engine.js"></script>
+<script src="render.js"></script>
+<script src="ui.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
